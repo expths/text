@@ -12,7 +12,7 @@ import base64
 import sys
 import signal
 from itertools import chain
-from config import postgreSQL as db
+from config_manager import postgreSQL as db
 
 API_url = "https://api.bitget.com/api/v2/spot/market/candles"
 table_name = lambda symbol:f"{symbol}_market_data"
@@ -305,16 +305,4 @@ def kine():
 
 # 请求所有缺失数据
 # list(map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),find_date_with_missing_data('BTCUSDT')))
-
-
-if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
-
-    status_flag = multiprocessing.Event()# 信号守护进程信号
-    auto_process = multiprocessing.Process(target=auto_worker,args=(status_flag,))
-    auto_process.daemon = True
-    auto_process.start()
-    time.sleep(10)
-    status_flag.set()# 设置信号
-    auto_process.join()
 

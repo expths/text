@@ -2,7 +2,7 @@ import psycopg
 import numpy as np
 from scipy.signal import convolve2d
 import matplotlib.pyplot as plt
-from config import postgreSQL as db
+from config_manager import postgreSQL as db
 
 
 table_name = lambda symbol:f"{symbol}_market_data"

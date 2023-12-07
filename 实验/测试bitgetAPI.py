@@ -1,7 +1,7 @@
 import bitget_api.v1.mix.order_api as maxOrderApi
 import bitget_api.bitget_api as baseApi
 from bitget_api.exceptions import BitgetAPIException
-from config import BITGET_API
+from config_manager import BITGET_API
 
 apiKey = BITGET_API["APIKey"]
 secretKey = BITGET_API["SecretKey"]
