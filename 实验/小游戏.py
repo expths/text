@@ -1,21 +1,45 @@
-from random import random
 
+import pygame
 
-class role:
-    hp = 100
-    def __init__(self,name:str,e_name:str,q_name:str) -> None:
-        self.name = name
-        self.e = e_name
-        self.q = q_name
-    def _attack(self,p,skill_name:str)->None:
-        damage = int(10*random())
-        p.hp -= damage
-        print(self.name+"使用了"+skill_name)
-        print("对"+p.name+f"造成了{damage}点伤害！")
-    def __sub__(self,p)->None:
-        self._attack(p,self.e)
-    def __rshift__(self,p)->None:
-        self._attack(p,self.q)
-#
-kq = role("刻晴","星斗归位","天街巡游")
-me = role("爷","风压剑","龙卷风")
+# 官方文档：https://www.pygame.org/docs/
+
+# pygame setup
+pygame.init()
+screen = pygame.display.set_mode((1280, 720))
+clock = pygame.time.Clock()
+running = True
+dt = 0
+
+player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
+
+while running:
+    # poll for events
+    # pygame.QUIT event means the user clicked X to close your window
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # fill the screen with a color to wipe away anything from last frame
+    screen.fill("purple")
+
+    pygame.draw.circle(screen, "red", player_pos, 40)
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w]:
+        player_pos.y -= 300 * dt
+    if keys[pygame.K_s]:
+        player_pos.y += 300 * dt
+    if keys[pygame.K_a]:
+        player_pos.x -= 300 * dt
+    if keys[pygame.K_d]:
+        player_pos.x += 300 * dt
+
+    # flip() the display to put your work on screen
+    pygame.display.flip()
+
+    # limits FPS to 60
+    # dt is delta time in seconds since last frame, used for framerate-
+    # independent physics.
+    dt = clock.tick(60) / 1000
+
+pygame.quit()

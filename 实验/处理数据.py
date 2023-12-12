@@ -17,13 +17,13 @@ def a(symbol):
             cur.execute(f"SELECT * FROM {table_name(symbol)} WHERE {rag} ORDER BY minute_stamp ASC")
             return np.array(cur.fetchall())
 
+data = a('BTCUSDT')
 
 kernel = np.array([[0, -0.3, 0, 0, 0, 0, 0],
                    [0, -0.7, 0, 0, 0, 0, 0],
                    [0, 1, 0, 0, 0, 0, 0]])
 
-
-arr = convolve2d(a('BTCUSDT'),kernel,mode='valid')
+arr = convolve2d(data,kernel,mode='valid')
 
 # 在（-100，100）之间划分2000个区间。
 bins = np.linspace(-10000,10000,2000)
@@ -40,9 +40,9 @@ p,bin = np.histogram(arr, bins=bins)
 s = np.std(arr)
 
 # 多次采样正态分布
-for i in range(1,100):
-    samples = np.random.normal(0, s, i)
-    print (np.sum(samples))
+# for i in range(1,100):
+#     samples = np.random.normal(0, s, i)
+#     print (np.sum(samples))
 
 # 创建一个灰度图像，这里使用随机生成的数据
 width, height = 100, 100
@@ -59,3 +59,13 @@ width, height = 100, 100
 # plt.hist(arr, bins=bins, edgecolor='black')
 # plt.show()
 
+# with np.nditer(data,[],[])as it:
+#     it
+
+print(data.shape)
+print(data.reshape((-1,15,46078)))
+
+def tofile():
+    """
+    使用tofile方法将ndarray以二进制写入文件。
+    """

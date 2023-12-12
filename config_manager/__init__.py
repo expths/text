@@ -1,16 +1,33 @@
 import json
 from typing import Any
-from template import *
-from configError import ConfigError
+from config_manager.configError import ConfigError
+
+
+def read_config_file():
+    """
+    读取所有配置文件
+    """
+    with open("config.json",mode='r')as config_file:
+        return json.load(config_file)
+
 
 class Config():
-    def __init__(self) -> None:
+    config = read_config_file()
+
+    def __init__(self,model_name:str) -> None:
         """
         导入配置文件。
 
         如果配置文件不存在，将配置名称保存下来。
         """
-        pass
+        try:
+            self.model_name = model_name
+            self.config =  config[model_name]
+        except:
+            model_name
+
+    def __str__(self) -> str:
+        return f"<config of {self.model_name}>"
 
     def __getattr__(self, __name: str) -> Any:
         """
@@ -39,25 +56,6 @@ class Config():
         """
 
 
-def read_config():
-    """
-    读取所有配置文件
-    """
-    with open("config.json",mode='r')as config_file:
-        return json.load(config_file)
-
-
-def read_config(file_name):
-    """
-    读取json文件。
-    
-    如果不存在则创建。
-    """
-    try:
-        return
-    except:
-        create_config(file_name)
-
 def create_config(file_name:str)->None:
     """
     创建json配置文件。
@@ -79,13 +77,8 @@ def b():
     """
     pass
 
-def c():
-    """
-    编辑自身
-    """
-    pass
 
-config = read_config()
+config = read_config_file()
 BITGET_API = config["bitget_api"]
 postgreSQL = config["postgreSQL"]
 
