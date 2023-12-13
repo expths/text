@@ -4,15 +4,44 @@ import zipfile
 from io import BytesIO
 import openpyxl
 from datetime import datetime,timedelta
-import multiprocessing
 import time
 import json
 import hmac
 import base64
 import sys
-import signal
 from itertools import chain
-from config_manager import postgreSQL as db
+import configparser
+
+try:
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+except FileNotFoundError:
+    print("[ERR]配置文件缺失")
+    config['bitget'] = {'APIKey':'','SecretKey':'','passphrase':''}
+    with open('config.ini',mode='w')as config_file:
+        config.write(config_file)
+
+try:
+    APIKey = config.get('bitget','APIKey')
+    SecretKey = config.get('bitget','SecretKey')
+    passphrase = config.get('bitget','passphrase')
+except configparser.NoSectionError:
+    print("[ERR]缺少API配置")
+    config['bitget'] = {'APIKey':'','SecretKey':'','passphrase':''}
+    with open('config.ini',mode='w')as config_file:
+        config.write(config_file)
+
+try:
+    db = {
+        "dbname": config.get('postgreSQL','dbname'),
+        "user": config.get('postgreSQL','user'),
+        "password": config.get('postgreSQL','password')
+    }
+except configparser.NoSectionError:
+    print("[ERR]缺少postgreSQL数据库配置")
+    config['postgreSQL'] = {'dbname':'','user':'','password':''}
+    with open('config.ini',mode='w')as config_file:
+        config.write(config_file)
 
 API_url = "https://api.bitget.com/api/v2/spot/market/candles"
 table_name = lambda symbol:f"{symbol}_market_data"
@@ -268,14 +297,6 @@ def function_fitting():
     """
 
 
-def coinglassao():
-    """
-    coinglass数据平台
-
-    https://www.coinglass.com/zh/pricing
-    """
-
-
 def coinmarketcap():
     """
     https://pro.coinmarketcap.com/features/
@@ -296,13 +317,13 @@ def kine():
     https://kine-api-docs.github.io/zh-cn/#fce908f544
     """
 
-# try:
-#     write_market_data_to_database('BTCUSDT',get_bitget_candles('BTCUSDT'))
-#     write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT','20231001'))
-# except psycopg.errors.UndefinedTable:
-#     create_market_database('BTCUSDT')
+if __name__ == "__main__":
+    try:
+        write_market_data_to_database('BTCUSDT',get_bitget_candles('BTCUSDT'))
+        write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT','20231001'))
+    except psycopg.errors.UndefinedTable:
+        create_market_database('BTCUSDT')
 
-
-# 请求所有缺失数据
-# list(map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),find_date_with_missing_data('BTCUSDT')))
+    # 请求所有缺失数据
+    list(map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),find_date_with_missing_data('BTCUSDT')))
 
