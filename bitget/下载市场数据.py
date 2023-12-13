@@ -1,3 +1,4 @@
+from typing import Any
 import requests
 import psycopg
 import zipfile
@@ -11,6 +12,9 @@ import base64
 import sys
 from itertools import chain
 import configparser
+import bitget_api.v1.mix.order_api as maxOrderApi
+import bitget_api.bitget_api as baseApi
+from bitget_api.exceptions import BitgetAPIException
 
 try:
     config = configparser.ConfigParser()
@@ -21,9 +25,10 @@ except FileNotFoundError:
     with open('config.ini',mode='w')as config_file:
         config.write(config_file)
 
+
 try:
-    APIKey = config.get('bitget','APIKey')
-    SecretKey = config.get('bitget','SecretKey')
+    apiKey = config.get('bitget','APIKey')
+    secretKey = config.get('bitget','SecretKey')
     passphrase = config.get('bitget','passphrase')
 except configparser.NoSectionError:
     print("[ERR]缺少API配置")
@@ -43,6 +48,7 @@ except configparser.NoSectionError:
     with open('config.ini',mode='w')as config_file:
         config.write(config_file)
 
+baseApi = baseApi.BitgetApi(apiKey, secretKey, passphrase)
 API_url = "https://api.bitget.com/api/v2/spot/market/candles"
 table_name = lambda symbol:f"{symbol}_market_data"
 bitget_market_data_earliest_date = '20180725'
@@ -317,13 +323,66 @@ def kine():
     https://kine-api-docs.github.io/zh-cn/#fce908f544
     """
 
+class Data_Table:
+    db = db
+    def __init__(self,symbol) -> None:
+        """
+        管理数据库。
+        """
+        self.symbol = symbol
+        pass
+
+
+class Candles_Data_Table(Data_Table):
+    """
+    行情数据库，包含7个字段。
+    """
+
+    def __init__(self,symbol) -> None:
+        """
+        登录并检查数据库状况。
+
+        如果表不存在则创建数据库。
+        """
+        try:
+            super().__init__(symbol)
+        except psycopg.errors.UndefinedTable:
+            # 创建数据库
+            create_market_database(symbol)
+
+    def __call__(self,request_func) -> Any:
+        """
+        装饰器函数,用于包装请求函数以自动管理数据库。
+        """
+        def f(*args,**kargs)->None:
+            data = request_func(*args,symbol=self.symbol,**kargs)
+            self.write_data(data)
+            return
+        return f
+
+    def write_data(self,data):
+        pass
+
+@Candles_Data_Table('BTCUSDT')
+def get_candles(symbol):
+    """
+    下载行情数据。
+    """
+    params = {'symbol':symbol,'granularity':'1min'}
+    a = baseApi.get("/api/v2/spot/market/candles",params)
+    return a
+
+
+
 if __name__ == "__main__":
-    try:
-        write_market_data_to_database('BTCUSDT',get_bitget_candles('BTCUSDT'))
-        write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT','20231001'))
-    except psycopg.errors.UndefinedTable:
-        create_market_database('BTCUSDT')
+    # try:
+    #     write_market_data_to_database('BTCUSDT',get_bitget_candles('BTCUSDT'))
+    #     write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT','20231001'))
+    # except psycopg.errors.UndefinedTable:
+    #     create_market_database('BTCUSDT')
 
-    # 请求所有缺失数据
-    list(map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),find_date_with_missing_data('BTCUSDT')))
+    # # 请求所有缺失数据
+    # list(map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),find_date_with_missing_data('BTCUSDT')))
 
+    a = get_candles()
+    print(a)

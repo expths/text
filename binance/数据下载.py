@@ -6,15 +6,19 @@ import psycopg
 try:
     config = configparser.ConfigParser()
     config.read('config.ini')
+    client = Spot(config.get('binance','api_key'),
+              config.get('binance','api_secret'),
+              show_limit_usage=True)
 except FileNotFoundError:
     print("[ERR]配置文件缺失")
     config['binance'] = {'api_key':'','api_secret':''}
     with open('config.ini',mode='w')as config_file:
         config.write(config_file)
+except configparser.NoSectionError:
+    config['binance'] = {'api_key':'','api_secret':''}
+    with open('config.ini',mode='w')as config_file:
+        config.write(config_file)
 
-client = Spot(config.get('binance','api_key'),
-              config.get('binance','api_secret'),
-              show_limit_usage=True)
 
 def c(func):
     """
