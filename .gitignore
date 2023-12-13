@@ -1,5 +1,4 @@
-*.json
-*.log
+log/*
+models/*
 config.ini
-.*/
 __pycache__/
