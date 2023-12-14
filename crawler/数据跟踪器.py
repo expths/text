@@ -6,7 +6,6 @@ class Data_Source_Tracker(type):
     """
     自动跟踪所有数据来源。
     通过捕获类定义中的属性字段，自动管理数据库表的创建、写入和维护。
-
     - 使用装饰器将请求函数加入跟踪列表。
     - 自动管理泛型参数。
     - 自动限制请求速率。
@@ -18,6 +17,17 @@ class Data_Source_Tracker(type):
     - 需要哪些参数标记
     - 数据的字段和类型
     - 如何定义数据表名称
+
+
+    设计目标：
+
+    一个追踪器可以针对某一类数据最终和管理。
+    一类数据可以有多个来源。
+    不同的来源可能需要不同的接口。
+
+    因此定义追踪器元类组织控制代码。
+    按数据类型定义追踪器实例。
+    最后通过定义请求函数编写具体的代码。
 
     """
     def __new__(cls, clsname, bases, clsdict):
@@ -65,7 +75,10 @@ class Data_Source_Tracker(type):
 
     ############### 以下重构
 
-    def __call__(self,request_func) -> Any:
+    def capture(self,request_func) -> Any:
+        """
+        装饰器函数，可以捕获定义的请求函数用于回调。
+        """
         def f()->None:
             data = request_func(symbol = self.symbol,
                                 exchange = self.exchange,
