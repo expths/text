@@ -15,6 +15,8 @@ import configparser
 import bitget_api.v1.mix.order_api as maxOrderApi
 import bitget_api.bitget_api as baseApi
 from bitget_api.exceptions import BitgetAPIException
+from abc import ABC, abstractmethod
+import threading
 
 try:
     config = configparser.ConfigParser()
@@ -323,52 +325,186 @@ def kine():
     https://kine-api-docs.github.io/zh-cn/#fce908f544
     """
 
-class Data_Table:
+
+
+
+
+class Data_Table(ABC):# 待实现
+    """
+    机器人可能需要爬取来自各种API的数据。
+    但无论数据来自于何处，都离不开数据库操作。
+    因此可以将数据库相关程序抽象出来构造数据表类。
+
+    但这个类不仅仅控制读写数据库。同时也是发起请求的控制器。
+    当数据库中出现异常或缺失的数据时，需要隐式地发起请求填补缺漏。
+
+    ---
+
+    继承数据表类产生各种具体的数据表类，在它们内部实现具体的数据库操作。
+    在同一类型的不同表使用符号加以区分。
+    
+    例如：
+
+    所有的k线数据都有7个字段。分别是时间、四个价格和两个成交额。
+    这些数据的种类不会因为交易所或交易对的不同而改变。
+    因此归纳创建一个k线表类。
+    使用交易所、交易对、时间度量三个符号区分不同的实例。
+
+    ---
+
+    在使用上，所有控制器都通过装饰器来接收数据。
+    这样做的好处是不需要在显示得编写各种控制函数。
+
+    例如：
+
+    @控制器实例(参数)
+    def 请求函数(请求参数):
+        请求操作代码
+        return 数据
+
+    在控制器内部不仅需要实现数据库的读写。
+    同时还要自动在需要的时候调用函数发起操作。
+    装饰器返回的函数用于手动显式执行函数，它应该返回操作状况。
+    """
     db = db
-    def __init__(self,symbol) -> None:
+
+    @abstractmethod
+    def __init__(self) -> None:
         """
-        管理数据库。
+        定义数据库。
+
+        其中应该定义包含哪些标志。
         """
-        self.symbol = symbol
-        pass
+
+    @abstractmethod
+    def __call__(self,request_func) -> Any:
+        """
+        装饰器函数,用于包装请求函数以自动管理数据库。
+
+        自动检查数据表是否存在。如果不存在则调用创建函数。
+        将数据标志符号输入请求函数，并自动捕获数据并写入数据库。
+        """
+
+    @property
+    @abstractmethod
+    def table_name(self)->str:
+        """
+        定义表的名称如何生成。
+
+        它会被用于数据库的创建和读取，应该避免冲突。
+        """
+
+    @abstractmethod
+    def create_table(self):
+        """
+        需要定义如何创建表。
+
+        调用一个新表时自动创建。
+        """
+
+    @abstractmethod
+    def write_data(self,data):
+        """
+        需要定义如何写入数据库。
+        """
+
+    @property
+    def exist_table(self):
+        """
+        检查数据库是否存在。
+        """
+        sql = f"SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '{self.table_name}');"
+        with psycopg.connect(**self.db) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+                return bool(cur.fetchall()[0][0])
+
+
 
 
 class Candles_Data_Table(Data_Table):
     """
-    行情数据库，包含7个字段。
+    行情数据库。
+
+    由交易对、交易所、时间度量三个标志
+    
+    包含时间、四个价格和两个成交额七个字段。
     """
 
-    def __init__(self,symbol) -> None:
+    @property
+    def symbols(self):
         """
-        登录并检查数据库状况。
+        所有交易对
+        """
+        return ['BTCUSDT']
 
-        如果表不存在则创建数据库。
-        """
-        try:
-            super().__init__(symbol)
-        except psycopg.errors.UndefinedTable:
-            # 创建数据库
+    @property
+    def symbol(self):
+        return self._symbol
+
+    @symbol.setter
+    def symbol(self,s):
+        if s not in self.symbols:
+            raise TypeError
+        self._symbol = s
+
+    def __init__(self,symbol:str|[str],exchange:str,granularity:str) -> None:
+        self.symbol = symbol
+        self.exchange = exchange
+        self.granularity = granularity
+        if not self.exist_table:
             create_market_database(symbol)
 
     def __call__(self,request_func) -> Any:
-        """
-        装饰器函数,用于包装请求函数以自动管理数据库。
-        """
-        def f(*args,**kargs)->None:
-            data = request_func(*args,symbol=self.symbol,**kargs)
+        def f()->None:
+            data = request_func(symbol = self.symbol,
+                                exchange = self.exchange,
+                                granularity = self.granularity)
             self.write_data(data)
-            return
-        return f
+        self.thread = threading.Thread(target=f)
+        self.thread.start()
+        return None
+
+    @property
+    def table_name(self)->str:
+        return f"[{self.symbol}]"
+
+    def create_table(self):
+        sql = f"""CREATE TABLE IF NOT EXISTS public.{self.table_name}
+                (
+                    minute_stamp bigserial NOT NULL,
+                    opening_price bigserial NOT NULL,
+                    highest_price bigserial NOT NULL,
+                    lowest_price bigserial NOT NULL,
+                    closing_price bigserial NOT NULL,
+                    basic_volume bigserial NOT NULL,
+                    pricing_volume bigserial NOT NULL,
+                    PRIMARY KEY (minute_stamp)
+                )"""
+        if self.exist_table:return
+        with psycopg.connect(**self.db) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
 
     def write_data(self,data):
-        pass
+        if not self.create_table:
+            self.create_table()
+        with psycopg.connect(**self.db) as conn:
+            with conn.cursor() as cur:
+                SQL = f"""INSERT INTO {self.table_name} 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (minute_stamp) DO NOTHING"""
+                cur.executemany(SQL,data)
 
-@Candles_Data_Table('BTCUSDT')
-def get_candles(symbol):
+
+
+
+@Candles_Data_Table('BTCUSDT','bitget','1m')
+def get_candles(symbol,granularity):
     """
     下载行情数据。
     """
-    params = {'symbol':symbol,'granularity':'1min'}
+    params = {'symbol':symbol,'granularity':granularity}
     a = baseApi.get("/api/v2/spot/market/candles",params)
     return a
 
@@ -384,5 +520,5 @@ if __name__ == "__main__":
     # # 请求所有缺失数据
     # list(map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),find_date_with_missing_data('BTCUSDT')))
 
-    a = get_candles()
-    print(a)
+    # get_candles()
+    print(Candles_Data_Table("USD","bitget","1m")())
