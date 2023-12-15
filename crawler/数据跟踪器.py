@@ -84,8 +84,6 @@ class Data_Source_Tracker(type):
                                 exchange = self.exchange,
                                 granularity = self.granularity)
             self.write_data(data)
-        self.thread = threading.Thread(target=f)
-        self.thread.start()
         return None
 
     def create_table(self):
