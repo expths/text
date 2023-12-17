@@ -14,7 +14,7 @@ class Data_Source_Tracker(type):
     - 当数据存在缺失时自动回调请求函数。
 
     子类中需要定义：
-    - 需要哪些参数标记
+    - 需要哪些签名
     - 数据的字段和类型
     - 如何定义数据表名称
 
@@ -30,13 +30,18 @@ class Data_Source_Tracker(type):
     最后通过定义请求函数编写具体的代码。
 
     """
-    def __new__(cls, clsname, bases, clsdict):
+    def __new__(cls, clsname, bases, clsdict)->type:
         """
         追踪器构造函数。
         检查类定义，配置管理数据库相关的元数据。
 
-        例如字段的数量和名称。
-        
+        扫描所有字段，其中作为参数的字段用于构造数据库和请求参数。
+        检查数据库名称函数是否用到了所有标记。
+        检查数据类型构造数据库命令。
+
+        注入请求函数的捕获函数。在其中检查请求函数的参数签名是否正确。
+        如果有可选参数验证其是否可以自动推导。
+
 
         元类的构造函数在定义类的时候调用。因此可以在这里控制类型的定义。
         
@@ -45,27 +50,41 @@ class Data_Source_Tracker(type):
 
         """
         annotations = clsdict['__annotations__']
+        tags = []
         for i in annotations:
-            print("追踪字段",i)
+            tags.append(i)
+            if i == 'a':print(annotations[i].__args__)
+        clsdict['create'] = cls.create_table
+        clsdict['write'] = cls.write_data
+        clsdict['__call__'] = cls.capture
+
         return super().__new__(cls,clsname, bases, clsdict)
         
 
-    def __call__(cls, *args: Any, **kwds: Any) -> Any:
+    def __call__(cls, *args: Any, **kwds: Any) -> object:
         """
         追踪器实例函数。
         接受标记符号，返回装饰器捕获请求函数。
         
+        检查输入类型是否正确。
+        配置自动程序持续发起请求。
+
+        使用享元模式，如果输入参数相同则返回同一个对象。
+
         
         在调用类的构造函数前会先调用元类的call函数。因此可以在这里进行一些定义控制。
         
         cls是定义的子类。
         super().__call__函数将会调用子类的构造函数。
         """
-        print("元类call函数",cls,args,kwds)
-        return cls
+
+        print("构造函数参数",args,kwds)
+        print("需要参数",cls.__annotations__)
+        
+        return super().__call__()# 返回一个call函数为装饰器的对象
 
     @property
-    def table_name():
+    def table_name()->str: # 在构造函数中添加验证合法性的功能。
         """
         定义使用的数据表的名称。
 
@@ -84,9 +103,21 @@ class Data_Source_Tracker(type):
                                 exchange = self.exchange,
                                 granularity = self.granularity)
             self.write_data(data)
-        return None
 
-    def create_table(self):
+        # 将f函数注册到循环中。
+        
+        return "捕获函数"
+    
+    @property
+    def exist_table()->bool:
+        """
+        检查是否存在数据库。
+
+        检查数据库实际内容是否和类定义一致。
+        """
+        return True
+
+    def create_table(self)->None:
         sql = f"""CREATE TABLE IF NOT EXISTS public.{self.table_name}
                 (
                     minute_stamp bigserial NOT NULL,
@@ -103,7 +134,7 @@ class Data_Source_Tracker(type):
             with conn.cursor() as cur:
                 cur.execute(sql)
 
-    def write_data(self,data):
+    def write_data(self,data)->None:
         if not self.create_table:
             self.create_table()
         with psycopg.connect(**self.db) as conn:
@@ -112,6 +143,13 @@ class Data_Source_Tracker(type):
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (minute_stamp) DO NOTHING"""
                 cur.executemany(SQL,data)
+
+
+    def c(self):
+        """
+        元编程函数。通过识别数据表名称定义函数自动逆向分析得到逆函数。
+        """
+        pass
         
 
 ########################### 以下测试
@@ -119,8 +157,9 @@ class Data_Source_Tracker(type):
 class Trade_Symbol(metaclass=Data_Source_Tracker):
     symbol:str
     exchange:str
+    a:tuple[int,int,int,int,int,int,int]
 
 
 if __name__ == "__main__":
     a = Trade_Symbol()
-    print(a.__dict__)
+    print(a(lambda x:x*x))
