@@ -1,4 +1,4 @@
-
+import inspect
 
 class Ttype(type):
     """

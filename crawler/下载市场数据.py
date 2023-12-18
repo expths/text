@@ -203,13 +203,19 @@ def request_bitget_history_data(symbol,date):
     print(f"请求{date}的{symbol}行情")
     response = requests.get(history_data_url)
     if response.status_code != 200:
+        if response.status_code == 403:
+            print(f"{date }数据异常")
+            return (i for i in ())
         print(response.status_code)
         raise RuntimeWarning("请求失败")
     
     # 提取文件并解压zip提取xlsx工作表
     zip_file = BytesIO(response.content)
     with zipfile.ZipFile(zip_file,"r")as z:
-        xlsx_file = BytesIO(z.read(xlsx_name))
+        try:
+            xlsx_file = BytesIO(z.read(xlsx_name))
+        except KeyError:
+            return (i for i in ())
     workbook = openpyxl.load_workbook(xlsx_file)
 
     # 清除表头并返回迭代器
@@ -448,7 +454,7 @@ class Candles_Data_Table(Data_Table):
             raise TypeError
         self._symbol = s
 
-    def __init__(self,symbol:str|[str],exchange:str,granularity:str) -> None:
+    def __init__(self,symbol:str|list[str],exchange:str,granularity:str) -> None:
         self.symbol = symbol
         self.exchange = exchange
         self.granularity = granularity
@@ -461,8 +467,6 @@ class Candles_Data_Table(Data_Table):
                                 exchange = self.exchange,
                                 granularity = self.granularity)
             self.write_data(data)
-        self.thread = threading.Thread(target=f)
-        self.thread.start()
         return None
 
     @property
@@ -520,5 +524,7 @@ if __name__ == "__main__":
     # # 请求所有缺失数据
     # list(map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),find_date_with_missing_data('BTCUSDT')))
 
-    # get_candles()
-    print(Candles_Data_Table("USD","bitget","1m")())
+    # 下载bitget所有历史数据
+    dates = date_iterator(datetime(2020,2,28),datetime(2023,12,1))
+    a = map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),dates)
+    list(a)

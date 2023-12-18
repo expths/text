@@ -2,14 +2,46 @@ import mplfinance as mpf
 import numpy as np
 import pandas as pd
 from random import randint
+import psycopg
+import matplotlib.pyplot as plt
+import configparser
+
+try:
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+except FileNotFoundError:
+    print("[ERR]配置文件缺失")
+
+try:
+    db = {
+        "dbname": config.get('postgreSQL','dbname'),
+        "user": config.get('postgreSQL','user'),
+        "password": config.get('postgreSQL','password')
+    }
+except configparser.NoSectionError:
+    print("[ERR]缺少postgreSQL数据库配置")
+    config['postgreSQL'] = {'dbname':'','user':'','password':''}
+    with open('config.ini',mode='w')as config_file:
+        config.write(config_file)
 
 
-# 生成示例的 n 维数组数据
-n_dim_array = np.array([[i,randint(0,100),randint(0,100),randint(0,100),randint(0,100)] for i in range(100)])
+table_name = lambda symbol:f"{symbol}_market_data"
+rag = " minute_stamp<28315679"
+
+def a(symbol):
+    """
+    读取数据返回Ndarray。
+    """
+    with psycopg.connect(**db) as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT * FROM {table_name(symbol)} WHERE {rag} ORDER BY minute_stamp ASC")
+            return np.array(cur.fetchall())
+
+data = a('BTCUSDT')
 
 # 将 n 维数组转换成 DataFrame，手动设置日期列和索引
-df = pd.DataFrame(n_dim_array, columns=['date', 'open', 'high', 'low', 'close'])
-df['date'] = pd.to_datetime(df['date'], unit='D')
+df = pd.DataFrame(data, columns=['date', 'open', 'high', 'low', 'close','',''])
+df['date'] = pd.to_datetime(df['date'], unit='m')
 df.set_index('date', inplace=True)
 
 # 配置样式
@@ -43,4 +75,4 @@ mpfstyle = mpf.make_mpf_style(
 )
 
 # 使用 'yahoo' 样式绘制蜡烛图
-mpf.plot(df, type='candle', style=mpfstyle, title='Candlestick Chart with NumPy Array',datetime_format='%Y/%m/%d',axisoff=False,mav=(5, 25, 75))
+mpf.plot(df, type='line', style=mpfstyle, title='Candlestick Chart with NumPy Array',datetime_format='%Y/%m/%d',axisoff=False,mav=(5, 25, 75))
