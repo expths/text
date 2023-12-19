@@ -1,14 +1,32 @@
-import inspect
+from dataclasses import dataclass
 
-class Ttype(type):
-    """
-    类似于枚举类型。用于数据追踪器自动管理数据。
-    """
-    pass
+@dataclass
+class trading_pair:
+    name:str
 
+@dataclass
+class price:
+    price:int
 
-class Symbol(metaclass = Ttype):
-    pass
+@dataclass
+class trading_volume:
+    volume:int
 
-class exchange(metaclass = Ttype):
-    pass
+@dataclass
+class ticker_information:
+    symbol:trading_pair
+    high24h:price
+
+@dataclass
+class candlestick_data:
+    time:trading_pair
+    open:price
+    high:price
+    low:price
+    close:price
+    base_volume:trading_volume
+    quote_volume:trading_volume
+
+def test(symbol:trading_pair)->candlestick_data:
+    data = (1,1,1,1,1,1,1)
+    return data

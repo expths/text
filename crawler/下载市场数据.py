@@ -525,6 +525,7 @@ if __name__ == "__main__":
     # list(map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),find_date_with_missing_data('BTCUSDT')))
 
     # 下载bitget所有历史数据
-    dates = date_iterator(datetime(2020,2,28),datetime(2023,12,1))
-    a = map(lambda date:write_market_data_to_database('BTCUSDT',request_bitget_history_data('BTCUSDT',date)),dates)
+    create_market_database('ETHUSDT')
+    dates = date_iterator(datetime(2018,7,28),datetime(2023,12,1))
+    a = map(lambda date:write_market_data_to_database('ETHUSDT',request_bitget_history_data('ETHUSDT',date)),dates)
     list(a)
