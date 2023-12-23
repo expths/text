@@ -17,6 +17,15 @@ print(f"Using {device} device")
 
 
 class MyNN(nn.Module):
+    """
+    通过正弦函数拟合数据。
+
+    这个模型的实际效果很不好。无论是增加梯度还是增加采样。
+    它甚至无法在无噪声的环境中识别曲线。
+
+    我猜测这是因为神经网络缺乏采样数据的顺序信息，从而难以识别数据中的周期。
+    在全连接层中，任何一个输出都是全体输入加减乘除的结果，这导致输入的一系列采样数据与顺序无关。
+    """
     def __init__(self,sampling:int ,hidden_layer:int):
         """
         输入采样率和隐藏层尺寸构建神经网络。
@@ -25,9 +34,9 @@ class MyNN(nn.Module):
         # self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(sampling,hidden_layer),
-            nn.ReLU(),
+            nn.Sigmoid(),
             nn.Linear(hidden_layer,hidden_layer),
-            nn.ReLU(),
+            nn.Sigmoid(),
             nn.Linear(hidden_layer, 2) # 输出频率和初相
         )
 
@@ -56,13 +65,13 @@ class MyNN(nn.Module):
         对于一个批次中的每个样本，损失函数和梯度都是分别计算的。
         这些损失值被求平均，梯度也被相加，最后通过反向传播算法更新神经网络的参数。
         """
-        x = x.view(1,-1)
+        # x = x.view(1,-1)
         # x = self.flatten(x)
         logits = self.linear_relu_stack(x)
         return logits
 
 # 模型，损失函数，优化器
-model = MyNN(100,32).to(device)
+model = MyNN(1000,1000).to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 
@@ -72,7 +81,7 @@ def train():
     训练数据
     """
     model.train()# 将模型配置为训练模式。
-    for _ in range(10):
+    for _ in range(10000):
         # 生成数据
         data,answer = data_g()
 
@@ -91,15 +100,22 @@ def data_g()->tuple[torch.tensor]:
 
     返回采样数据和真实值。
     """
-    data:torch.tensor = torch.rand(100)
-    answer:torch.tensor = torch.rand(1,2)
+    data:torch.tensor
+    answer:torch.tensor
+
+    with torch.no_grad():
+        data = torch.arange(0,10*1000,1)
+        data = data.view(10,1000)
+        answer = torch.rand(10,2)
+        answer[:,1] = answer[:,1]*100 % (6.28/answer[:,0])
+        data = 10 * torch.sin(data * answer[:,0].view(-1,1) + answer[:,1].view(-1,1))
+
     return data,answer
 
 train()
 
 # 测试成果
 model.eval()# 将模型配置为评估模式。
-for i in range(3):
-    data,answer = data_g()
-    output = model(data)
-    print("输出",output,"\t答案",answer)
+data,answer = data_g()
+output = model(data)
+print("输出",output,"\n答案",answer)
