@@ -204,7 +204,7 @@ def request_bitget_history_data(symbol,date):
     response = requests.get(history_data_url)
     if response.status_code != 200:
         if response.status_code == 403:
-            print(f"{date }数据异常")
+            print(f"{date}数据异常")
             return (i for i in ())
         print(response.status_code)
         raise RuntimeWarning("请求失败")
