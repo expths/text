@@ -1,6 +1,6 @@
 from logging import DEBUG
 import scrapy
-
+from pycrawler.items import BTCUSDT
 
 class BitgetHistoryDataSpider(scrapy.Spider):
     name = 'bitget_history_data'
@@ -15,4 +15,6 @@ class BitgetHistoryDataSpider(scrapy.Spider):
         yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        print(response)
+        item = BTCUSDT()
+        item['time'] = '2015'
+        return item
