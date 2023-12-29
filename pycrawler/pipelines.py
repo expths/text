@@ -42,6 +42,8 @@ class PycrawlerPipeline:
 
         每一个管道的返回值都会成为下一个管道的输入值，
         因此如果管道没有返回Item对象就会产生None值。
+
+        向管道中传入Request对象不会再返回调度器
         """
         print("管道",item)
         return item
