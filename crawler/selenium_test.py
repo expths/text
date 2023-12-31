@@ -31,21 +31,23 @@ driver.get('https://www.binance.com/zh-CN/copy-trading/lead-details/372546887888
 
 try:
     xpath = '//div[@class="bn-table-container"]//table//tr[@data-row-key]'
+    # tab = driver.find_elements(By.XPATH,xpath)
+
     with open('crawler/inject/test.js',mode='r',encoding='utf-8')as script:
         script = script.read()
-
-    tab = driver.find_elements(By.XPATH,xpath)
+    
+    # execute_script的输入代码会被放入容器中执行，使用return语句返回值。
     tab = driver.execute_script(script)
     print(tab)
 except NoSuchElementException:
     print("找不到目标！")
 
-# 检查浏览器机器人指纹
-a = driver.execute_script('return 123;')
-print(a)
+# input(":")
+# for i in driver.find_elements(By.XPATH,xpath):
+#     print(i.get_attribute("data-row-key"))
 
 # 等待退出
-input(":")
+input("等待<Enter>退出:")
 
 
 try:

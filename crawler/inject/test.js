@@ -4,7 +4,7 @@ var result = document.evaluate(xpath, document, null, XPathResult.ANY_TYPE, null
 for (const c in result) {
     console.log('c')
 }
-return String(result)
+return {"a":"123","b":456}
 
 
 // 典型目标
