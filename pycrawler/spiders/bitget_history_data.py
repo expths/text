@@ -5,7 +5,7 @@ from pycrawler.items import BTCUSDT
 class BitgetHistoryDataSpider(scrapy.Spider):
     name = 'bitget_history_data'
     allowed_domains = ['img.bitgetimg.com']
-    start_urls = ['http://img.bitgetimg.com/']
+    start_urls = ['https://img.bitgetimg.com/']
 
     def start_requests(self):
         # history_data_url = f'https://img.bitgetimg.com/online/kline/{symbol}/{symbol}_SP_1min_{date}.zip'

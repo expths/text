@@ -14,13 +14,10 @@ try:
     password = config.get('outlook','password')
 except FileNotFoundError:
     print("[ERR]配置文件缺失")
-    config['outlook'] = {'user':'','password':''}
-    with open('config.ini',mode='w')as config_file:
-        config.write(config_file)
 except configparser.NoSectionError:
-    config['outlook'] = {'user':'','password':''}
-    with open('config.ini',mode='w')as config_file:
-        config.write(config_file)
+    print("缺失配置")
+except configparser.NoOptionError:
+    print("找不到字段")
 
 
 conn = imaplib.IMAP4_SSL(server)
