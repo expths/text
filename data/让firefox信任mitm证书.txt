@@ -1,0 +1,16 @@
+
+您需要让 Firefox 信任 Mitmproxy 生成和使用的根 CA 证书。
+为此，请打开 Firefox 首选项 -> 隐私和安全
+然后向下滚动到页面末尾并单击按钮“查看证书...”
+选择“权限”选项卡，然后单击“导入”按钮。
+如果文件选择器对话框选择文件 ~/.mitmproxy/mitmproxy-ca-cert.cer。 当 Firefox 询问应信任证书的目的时，请选择“用于网站”。
+安装证书后，Firefox 将信任 Mitmproxy，您可以通过 Mitmproxy 浏览网页。 如果某些页面仍然无法工作，您必须清除 Firefox 缓存以删除 HTTP 严格传输安全 (HSTS) 固定证书。
+
+
+Webdriver 没有用于添加个人证书的内置机制。如果您使用的是 Firefox，我发现执行此操作的唯一方法是 创建 Firefox 配置文件并将证书添加到其中。 
+你可以 然后在运行测试时重用该配置文件，或者，这是 我的首选选项是获取 cert8.db 和 key3.db 文件并添加它们 到 webdriver 在运行时创建的配置文件。
+
+
+2024/1/6:
+选择了错误的证书导致出现SEC_ERROR_BAD_SIGNATURE异常。我使用本地证书连接到了debian上的代理。
+注意证书位置。每个mitmproxy都会生成自己的证书，这样可以防止其他使用mitmproxy的黑客攻击。

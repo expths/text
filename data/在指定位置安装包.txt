@@ -1,0 +1,6 @@
+
+
+使用pip安装python包时可以通过targat参数指定安装的位置。
+在debian环境下，尽管不能在全局使用pip管理包，但通过下面的代码可以将包置于本地。
+`pip install celery --target=./lib`
+

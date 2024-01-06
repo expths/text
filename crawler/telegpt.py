@@ -30,7 +30,7 @@ cur = cookie_db.cursor()
 
 
 cookies_file = "cookies/binance.json"
-Authenticator = pyotp.parse_uri("")
+Authenticator = pyotp.parse_uri("otpauth://totp/binance?secret=F5SYWEVOOPVOBGD6&issuer=me")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -114,7 +114,7 @@ async def get(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_my_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    获取浏览器当前的页面标题和会话句柄。
+    获取用户ID
     """
     await context.bot.send_message(chat_id=update.effective_chat.id, text=f"ID: {update.effective_chat.id}")
 
@@ -128,14 +128,6 @@ def async_decorator(func):
         return await func(update, context)
     return f
 
-async def get_window(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    获取浏览器当前的页面标题和会话句柄。
-    """
-    window = driver.title
-    handle = driver.current_window_handle
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"当前页面{window}\n{handle}")
-
 
 class Tabdriver:
     """
@@ -143,11 +135,15 @@ class Tabdriver:
 
     负责给每一个应用提供一个标签页。
     自动检查浏览器是否存活，标签页是否存活。
+
+    driver.switch_to.window(window_handle)切换标签页
+    driver.switch_to.new_window('tab')创建并切换到新标签页
+    driver.close()关闭标签页
     """
 
-    driver:webdriver # 所有对象共享一个浏览器实例
+    driver:webdriver = None # 所有对象共享一个浏览器实例
     logger:logging.Logger = logging.getLogger('BroxserDriver')
-    tabs:set = set()
+    tabs:map = {}
 
     @classmethod
     def broxser_open(cls):
@@ -181,9 +177,13 @@ class Tabdriver:
         
     def __init__(self,name) -> None:
 
+        # 初始化浏览器
+        if not self.driver:
+            Tabdriver.broxser_open()
+
         # 申请一个标签页句柄
-        for handle,app in self.tabs:
-            if app == "init":
+        for handle in self.tabs:
+            if self.tabs[handle] == "init":
                 self.window_handle = handle # 保存标签页句柄
                 self.tabs[handle] = name # 将标签页标记为已用
         if self.window_handle:
@@ -226,7 +226,8 @@ async def broxser_opened(context: ContextTypes.DEFAULT_TYPE):
 async def binance(context: ContextTypes.DEFAULT_TYPE):
     
     # await context.bot.send_message(chat_id=update.effective_chat.id, text=f"当前处于{window}")
-    context.job.data
+    context.job.data.driver.get("https://google.com")
+    print(context.job.data.driver.title)
 
 
 
@@ -236,7 +237,6 @@ async def webdriver_cli(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     sh = update.message.text[5:]
     await context.bot.send_message(chat_id=update.effective_chat.id, text=f"命令{sh}")
-
 
 
 
@@ -253,10 +253,10 @@ if __name__ == '__main__':
     application.add_handler(caps_handler)
     application.add_handler(timer_handler)
     application.add_handlers([
-        CommandHandler('win',get_window),
         CommandHandler('cli',webdriver_cli),
         CommandHandler('id',get_my_id)
     ])
     
     # application.job_queue.run_repeating(Fdriver.broxser_opened, interval=60, first=10)
+    application.job_queue.run_once(binance,1)
     application.run_polling()

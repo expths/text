@@ -1,0 +1,11 @@
+
+在debian中可以直接通过apt包管理器取得tor服务。
+使用service启动tor，根据 ss -tuln 的输出可知tor代理服务的默认端口是9050。
+
+直接通过浏览器访问该地址收到异常。在默认情况下tor服务不代理http连接。
+ This is a SOCKs proxy, not an HTTP proxy.
+ It appears you have configured your web browser to use this Tor port as an HTTP proxy.
+ This is not correct: This port is configured as a SOCKS proxy, not an HTTP proxy.
+ If you need an HTTP proxy tunnel, use the HTTPTunnelPort configuration option in place of,
+ or in addition to, SOCKSPort. Please configure your client accordingly. 
+

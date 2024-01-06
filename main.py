@@ -4,7 +4,7 @@ import multiprocessing
 import time
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
-
+from celery import Celery
 
 def Scrapy_main():
     """

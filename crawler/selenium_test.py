@@ -22,7 +22,7 @@ driver.get('https://binance.com')
 def bcap():
     try:
         driver.find_element(By.XPATH,'//div[class="bcap-modal"]')
-        input("验证码:")
+        input("等待人机验证:")
     except:
         pass
 

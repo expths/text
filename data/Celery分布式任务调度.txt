@@ -1,0 +1,12 @@
+
+创建多个进程运行同一个工作者程序。
+发生异常，收到来自多个节点的响应。
+提示需要为不同的节点配置不同的名称，但工作者能够正常运行。
+
+ DuplicateNodenameWarning: Received multiple replies from node name:
+
+ Please make sure you give each node a unique nodename using
+ the celery worker `-n` option.
+
+在单个主机上运行多个工作程序时最好使用唯一的名称。通过-n参数可以添加节点名称。
+

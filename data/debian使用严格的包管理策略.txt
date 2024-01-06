@@ -1,0 +1,22 @@
+
+debian看起来开始使用更加严格的包管理模式了。
+调用pip在全局安装python包将会提示使用apt包管理器，
+对于debian库中没有的包应该在venv虚拟环境中安装。
+
+ This environment is externally managed
+╰─> To install Python packages system-wide, try apt install
+    python3-xyz, where xyz is the package you are trying to
+    install.
+
+    If you wish to install a non-Debian-packaged Python package,
+    create a virtual environment using python3 -m venv path/to/venv.
+    Then use path/to/venv/bin/python and path/to/venv/bin/pip. Make
+    sure you have python3-full installed.
+
+    If you wish to install a non-Debian packaged Python application,
+    it may be easiest to use pipx install xyz, which will manage a
+    virtual environment for you. Make sure you have pipx installed.
+
+    See /usr/share/doc/python3.11/README.venv for more information.
+
+我猜测这样做的好处在于可以更好的控制系统中的各个模块确定兼容。

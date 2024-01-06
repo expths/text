@@ -1,0 +1,10 @@
+
+直接在控制台中调用geckodriver.exe程序会得到异常，但是此后的输出是正常的。
+geckodriver.exe: error: 以一种访问权限不允许的方式做了一个访问套接字的尝试。 (os error 10013)
+geckodriver 0.33.0 (a80e5fd61076 2023-04-02 18:31 +0000)
+WebDriver implementation for Firefox
+
+尝试在python中通过selenium调用windows版的geckodriver.exe失败。
+selenium.common.exceptions.WebDriverException: Message: Can not connect to the Service ./geckodriver.exe
+
+显然，wsl中的debian并没有图形界面，这意味着我必须在windows下启动selenium程序。

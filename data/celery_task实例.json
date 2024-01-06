@@ -1,0 +1,41 @@
+{
+    "body": "W1syLCAzXSwge30sIHsiY2FsbGJhY2tzIjogbnVsbCwgImVycmJhY2tzIjogbnVsbCwgImNoYWluIjogbnVsbCwgImNob3JkIjogbnVsbH1d",
+    "content-encoding": "utf-8",
+    "content-type": "application/json",
+    "headers": {
+        "lang": "py",
+        "task": "Celery.\u5de5\u4f5c\u8005.add",
+        "id": "f4b56568-ae1e-4f9c-8023-be34ba6e7ffb",
+        "shadow": null,
+        "eta": null,
+        "expires": null,
+        "group": null,
+        "group_index": null,
+        "retries": 0,
+        "timelimit": [
+            null,
+            null
+        ],
+        "root_id": "f4b56568-ae1e-4f9c-8023-be34ba6e7ffb",
+        "parent_id": null,
+        "argsrepr": "(2, 3)",
+        "kwargsrepr": "{}",
+        "origin": "gen15860@82F2",
+        "ignore_result": false,
+        "replaced_task_nesting": 0,
+        "stamped_headers": null,
+        "stamps": {}
+    },
+    "properties": {
+        "correlation_id": "f4b56568-ae1e-4f9c-8023-be34ba6e7ffb",
+        "reply_to": "8e4b8f28-592e-3c13-a943-67edcdce91f0",
+        "delivery_mode": 2,
+        "delivery_info": {
+            "exchange": "",
+            "routing_key": "celery"
+        },
+        "priority": 0,
+        "body_encoding": "base64",
+        "delivery_tag": "1974b2fd-dc1c-4447-b46d-cb7e6df3b300"
+    }
+}
